@@ -143,8 +143,13 @@
            :if-new (file+head "${slug}.org"
                               "#+TITLE: ${title}\n#+ROAM_TAGS: \n")
            :unnarrowed t
+           )
 
-           )))
+          ("d" "daily note" plain
+           "* Morning\n** What is one thing I can do today to get 1% better?\n%?\n** How do I want to feel at the end of today?\n\n** What would make today a 'win'?\n\n** What habit or mindset do I want to reinforce today?\n\n** If I face a challenge today, how will I respond differently than I normally do?\n\n* Evening\n** What did I do today that I'm proud of?\n\n** Where did I fall short today, and what can I learn from it?\n\n** What negative thoughts or behaviour popped up today? How could I respond better next time?\n\n** What gave me energy today? What drained it?\n\n** Did I act in alignment with my values today?\n"
+           :if-new (file+head "%<%Y%m%d>.org"
+                              "#+TITLE: ${date}\n")
+           :unnarrowed t)))
   )
 
 (use-package! websocket
