@@ -40,7 +40,7 @@
 
 ;; If you use `org' and don't want your org files in the default location below,
 ;; change `org-directory'. It must be set before org loads!
-(setq org-directory "~/notes/org/")
+(setq org-directory "~/org/")
 
 
 ;; Whenever you reconfigure a package, make sure to wrap your config in an
@@ -88,8 +88,8 @@
       :desc "Toggle neotree"
       "t n" #'neotree-toggle)
 
-(after! vterm
-  (set-popup-rule! "^\\*vterm\\*" :size 0.2 :vsol -4 :select t :quit t))
+;; (after! vterm
+;;   (set-popup-rule! "^\\*vterm\\*" :size 0.2 :vsol -4 :select t :quit t))
 
 ;; Create file with Neotree
 (defun neotree-create-file ()
@@ -114,7 +114,7 @@
 (use-package org-roam
   :ensure t
   :custom
-  (org-roam-directory (file-truename "~/notes/org-roam/"))
+  (org-roam-directory (file-truename "~/org/notes/"))
   (org-roam-completion-everywhere t)
   :bind (("C-c n l" . org-roam-buffer-toggle)
          ("C-c n f" . org-roam-node-find)
@@ -163,12 +163,29 @@
         org-roam-ui-update-on-save t
         org-roam-ui-open-on-start t))
 
-(use-package! org-download
-  :after org
-  :bind
-  (:map org-mode-map
-        (("s-Y" . org-download-screenshot)
-         ("s-y" . org-download-yank))))
+;; (use-package! org-download
+;;   :after org
+;;   :config
+;;   (setq org-download-image-dir "./images"
+;;         org-download-method 'directory
+;;         (add-hook 'dired-mode-hook 'org-download-enable)
+
+;;         )
+
+
+(defun my-yank-image-from-win-clipboard-through-powershell()
+  (interactive)
+  (let* ((powershell "/mnt/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe")
+         (file-name (format-time-string "screenshot_%Y%m%d_%H%M%S.png"))
+         ;; (file-path-powershell (concat "c:/Users/\$env:USERNAME/" file-name))
+         (file-path-wsl (concat "~/org/images/" file-name))
+         )
+    (shell-command (concat powershell " -command \"(Get-Clipboard -Format Image).Save(\\\"C:/Users/bengi/" file-name "\\\")\""))
+    ;; (shell-command (concat powershell " -command \"(Get-Clipboard -Format Image).Save(\\\"C:/Users/Public/" file-name "\\\")\""))
+    (rename-file (concat "/mnt/c/Users/bengi/" file-name) file-path-wsl)
+    (insert (concat "[[file:" file-path-wsl "]]"))
+    (message "insert DONE.")
+    ))
 
 (setq xclip-method 'wl-clipboard)
 
@@ -182,3 +199,55 @@
   (evil-local-set-key 'motion "k" 'evil-previous-visual-line))
 
 (add-hook 'org-mode-hook #'my/org-visual-line-setup)
+
+(setq org-agenda-files '("~/org/agenda/")) ;; Or wherever your dailies/todo files are
+
+(defun my/vterm-new ()
+  "Create a new vterm buffer with a unique name."
+  (interactive)
+  (let ((buffer (generate-new-buffer "*vterm*")))
+    (with-current-buffer buffer
+      (vterm-mode))
+    (pop-to-buffer buffer)))
+
+(map! :leader
+      :desc "New vterm buffer"
+      "o T" #'my/vterm-new)
+
+(after! vterm
+  (set-popup-rule! "^\\*vterm.*\\*$"
+    :size 0.2
+    :vslot -4
+    :select t
+    :quit t))
+
+
+(setq gc-cons-threshold 100000000) ;; 100 MB, default is 800 KB
+
+;; (with-eval-after-load 'flycheck
+;;   (setq flycheck-disabled-checkers '(solidity-solium))
+
+;;   ;; (setq-default flycheck-solidity-solhint-executable "solhint")
+;;   ;; (setq-default flycheck-checker 'solidity-solhint)
+;;   (flycheck-add-mode 'solhint-checker 'solidity-mode)
+;;   (add-hook 'solidity-mode-hook
+;;             (lambda ()
+;;               (when (flycheck-checker-supports-major-mode-p 'solhint-checker 'solidity-mode)
+;;                 (flycheck-select-checker 'solhint-checker)
+;;                 (flycheck-mode 1)))))
+
+(use-package solidity-mode
+  :ensure t
+  :config
+  (setq solidity-solc-path "/home/bengillitt/.nvm/versions/node/v24.2.0/bin/solcjs")
+  (setq solidity-solium-path "/home/bengillitt/.nvm/versions/node/v24.2.0/bin/solium")
+
+  (setq solidity-flycheck-solc-checker-active t)
+  (setq solidity-flycheck-solium-checker-active t)
+
+  (setq flycheck-solidity-solc-addstd-contracts t)
+  (setq flycheck-solidity-solium-soliumrcfile "/home/bengillitt/.soliumrc.json")
+
+  (setq solidity-comment-style 'slash))
+
+;; (add-hook 'solidity-mode-hook (lambda () (flycheck-mode -1)))
